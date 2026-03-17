@@ -29,30 +29,38 @@ const BlockRenderer = ({
   onAdd: (type: ContentBlock["type"]) => void;
   onRemove: () => void;
 }) => {
-  const wrapper = (children: React.ReactNode) => (
-    <div className="relative group/block">
-      {children}
-      {editMode && (
-        <div className="absolute -left-10 top-1 hidden group-hover/block:flex flex-col gap-1 animate-fade-in">
+  const wrapper = (children: React.ReactNode) => {
+    if (!editMode) return <div>{children}</div>;
+
+    return (
+      <div className="group/block relative border border-transparent hover:border-border rounded-md transition-colors duration-150 mb-1">
+        {/* Toolbar — dentro do container, sempre acessível */}
+        <div className="absolute top-1 right-1 z-10 flex items-center gap-0.5 opacity-0 group-hover/block:opacity-100 transition-opacity duration-150">
           <button
-            onClick={onRemove}
-            className="p-1 rounded bg-destructive/20 hover:bg-destructive/40 text-destructive transition-colors"
+            onMouseDown={(e) => { e.preventDefault(); onRemove(); }}
+            className="p-1 rounded bg-background border border-border text-muted-foreground hover:text-destructive hover:border-destructive/50 hover:bg-destructive/10 transition-colors"
             title="Remover bloco"
           >
             <Trash2 className="h-3 w-3" />
           </button>
         </div>
-      )}
-      {editMode && (
-        <div className="hidden group-hover/block:flex items-center gap-1 mt-1 mb-2 animate-fade-in">
-          <button onClick={() => onAdd("paragraph")} className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground hover:bg-accent transition-colors">+ Texto</button>
-          <button onClick={() => onAdd("heading")} className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground hover:bg-accent transition-colors">+ Título</button>
-          <button onClick={() => onAdd("code")} className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground hover:bg-accent transition-colors">+ Código</button>
-          <button onClick={() => onAdd("list")} className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground hover:bg-accent transition-colors">+ Lista</button>
+
+        {/* Conteúdo do bloco */}
+        <div className="px-2 pt-1">
+          {children}
         </div>
-      )}
-    </div>
-  );
+
+        {/* Barra "adicionar depois" — dentro do container, na base */}
+        <div className="flex items-center gap-1 px-2 pb-1.5 opacity-0 group-hover/block:opacity-100 transition-opacity duration-150">
+          <span className="text-[10px] text-muted-foreground mr-1">Inserir:</span>
+          <button onMouseDown={(e) => { e.preventDefault(); onAdd("paragraph"); }} className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground hover:bg-accent transition-colors">Texto</button>
+          <button onMouseDown={(e) => { e.preventDefault(); onAdd("heading"); }} className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground hover:bg-accent transition-colors">Título</button>
+          <button onMouseDown={(e) => { e.preventDefault(); onAdd("code"); }} className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground hover:bg-accent transition-colors">Código</button>
+          <button onMouseDown={(e) => { e.preventDefault(); onAdd("list"); }} className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground hover:bg-accent transition-colors">Lista</button>
+        </div>
+      </div>
+    );
+  };
 
   switch (block.type) {
     case "heading": {
@@ -176,7 +184,7 @@ const DocContent = ({
         </div>
 
         {/* Content blocks */}
-        <div className={editMode ? "pl-10" : ""}>
+        <div>
           {page.blocks.map((block) => (
             <BlockRenderer
               key={block.id}
