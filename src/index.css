@@ -1,0 +1,146 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 13% 10%;
+    --foreground: 210 17% 82%;
+
+    --card: 220 13% 13%;
+    --card-foreground: 210 17% 82%;
+
+    --popover: 220 13% 13%;
+    --popover-foreground: 210 17% 82%;
+
+    --primary: 217 92% 62%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 13% 16%;
+    --secondary-foreground: 210 17% 82%;
+
+    --muted: 220 13% 16%;
+    --muted-foreground: 215 12% 50%;
+
+    --accent: 220 13% 18%;
+    --accent-foreground: 210 17% 90%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 13% 18%;
+    --input: 220 13% 18%;
+    --ring: 217 92% 62%;
+
+    --radius: 0.5rem;
+
+    --code-bg: 220 13% 7%;
+    --code-foreground: 210 17% 78%;
+
+    --sidebar-background: 220 13% 8%;
+    --sidebar-foreground: 210 17% 70%;
+    --sidebar-primary: 217 92% 62%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 13% 14%;
+    --sidebar-accent-foreground: 210 17% 90%;
+    --sidebar-border: 220 13% 15%;
+    --sidebar-ring: 217 92% 62%;
+    --sidebar-hover: 220 13% 14%;
+
+    --toc-active: 217 92% 62%;
+    --success: 160 84% 39%;
+    --edit-highlight: 217 92% 62%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+  h1, h2, h3, h4 {
+    @apply font-display;
+  }
+}
+
+/* Scrollbar - GitBook style thin */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground));
+}
+
+/* Code block styling */
+.code-block {
+  background: hsl(var(--code-bg));
+  color: hsl(var(--code-foreground));
+}
+
+/* Prose styles - GitBook inspired */
+.docs-prose h1 {
+  @apply text-3xl font-bold mb-2 text-accent-foreground;
+}
+.docs-prose h2 {
+  @apply text-xl font-semibold mt-10 mb-3 pb-2 border-b border-border text-accent-foreground;
+  scroll-margin-top: 5rem;
+}
+.docs-prose h3 {
+  @apply text-lg font-semibold mt-6 mb-2 text-accent-foreground;
+  scroll-margin-top: 5rem;
+}
+.docs-prose p {
+  @apply leading-7 mb-4 text-foreground;
+}
+.docs-prose ul {
+  @apply list-disc pl-6 mb-4 space-y-1.5;
+}
+.docs-prose ol {
+  @apply list-decimal pl-6 mb-4 space-y-1.5;
+}
+.docs-prose a {
+  @apply text-primary underline underline-offset-4 hover:opacity-80 transition-opacity;
+}
+.docs-prose blockquote {
+  @apply border-l-2 border-primary/40 pl-4 my-4 text-muted-foreground italic;
+}
+.docs-prose table {
+  @apply w-full border-collapse mb-6;
+}
+.docs-prose th {
+  @apply text-left font-semibold p-3 border-b-2 border-border text-accent-foreground;
+}
+.docs-prose td {
+  @apply p-3 border-b border-border;
+}
+.docs-prose code:not(pre code) {
+  @apply bg-secondary px-1.5 py-0.5 rounded text-sm font-mono text-primary;
+}
+
+/* Editable content styles */
+.editable-block {
+  @apply rounded transition-all duration-150;
+}
+.editable-block:hover {
+  outline: 1px dashed hsl(var(--edit-highlight) / 0.3);
+  outline-offset: 4px;
+}
+.editable-block:focus {
+  outline: 2px solid hsl(var(--edit-highlight) / 0.6);
+  outline-offset: 4px;
+}
+.editable-block[contenteditable="true"] {
+  @apply cursor-text;
+}
