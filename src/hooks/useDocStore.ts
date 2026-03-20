@@ -1,7 +1,22 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { type DocPage, type ContentBlock, type DocSection } from "@/data/documentation";
+import { useAuth } from "@/context/AuthContext";
 
-const API_URL = "/api/pages";
+// Deriva a base da URL a partir de VITE_API_URL
+const API_BASE = (() => {
+  const raw = import.meta.env.VITE_API_URL as string | undefined;
+  if (!raw) return "";
+  if (raw.includes("api.php")) return raw;
+  return raw.replace(/\/api\/pages.*$/, "");
+})();
+
+const isPHP = API_BASE.includes(".php");
+
+function pagesUrl(projectId: string) {
+  return isPHP
+    ? `${API_BASE}?action=pages&project=${projectId}`
+    : `${API_BASE}/api/pages?project=${projectId}`;
+}
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -14,9 +29,11 @@ const EMPTY_DB: DbSchema = { navigation: [], pages: {} };
 
 // ─── API ─────────────────────────────────────────────────────────────────────
 
-async function loadFromApi(): Promise<DbSchema | null> {
+async function loadFromApi(projectId: string, token: string | null): Promise<DbSchema | null> {
   try {
-    const res = await fetch(API_URL);
+    const headers: HeadersInit = {};
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    const res = await fetch(pagesUrl(projectId), { headers });
     if (!res.ok) return null;
     const data: DbSchema = await res.json();
     if (!data?.navigation || !data?.pages) return null;
@@ -26,10 +43,14 @@ async function loadFromApi(): Promise<DbSchema | null> {
   }
 }
 
-async function saveToApi(db: DbSchema): Promise<void> {
-  const res = await fetch(API_URL, {
+async function saveToApi(projectId: string, db: DbSchema, token: string | null): Promise<void> {
+  // Usa text/plain para evitar CORS preflight em hostings restritivos (InfinityFree, etc.)
+  // O PHP lê o body via php://input independentemente do Content-Type
+  const headers: HeadersInit = { "Content-Type": "text/plain" };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  const res = await fetch(pagesUrl(projectId), {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify(db),
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -55,17 +76,31 @@ function uniqueId(base: string, existing: string[]): string {
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
-export function useDocStore() {
+export function useDocStore(projectId: string | null) {
+  const { token } = useAuth();
   const [db, setDb] = useState<DbSchema>(EMPTY_DB);
   const [editMode, setEditMode] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Quando true, o próximo disparo do useEffect de save é ignorado
   const skipNextSave = useRef(true);
+  const currentProjectId = useRef<string | null>(null);
 
-  // ── Carregar do JSON no arranque ────────────────────────────────────────────
+  // ── Carregar quando o projeto muda ──────────────────────────────────────────
   useEffect(() => {
-    loadFromApi().then((data) => {
+    if (!projectId) {
+      setDb(EMPTY_DB);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    setDb(EMPTY_DB);
+    skipNextSave.current = true;
+    currentProjectId.current = projectId;
+
+    loadFromApi(projectId, token).then((data) => {
+      // Ignorar se o projeto já mudou entretanto
+      if (currentProjectId.current !== projectId) return;
       if (data) {
         skipNextSave.current = true;
         setDb(data);
@@ -74,18 +109,19 @@ export function useDocStore() {
       }
       setLoading(false);
     });
-  }, []);
+  }, [projectId, token]);
 
   // ── Guardar sempre que db muda ──────────────────────────────────────────────
   useEffect(() => {
+    if (!projectId) return;
     if (skipNextSave.current) {
       skipNextSave.current = false;
       return;
     }
-    saveToApi(db).catch((e) =>
+    saveToApi(projectId, db, token).catch((e) =>
       console.warn("[useDocStore] Falha ao guardar:", e)
     );
-  }, [db]);
+  }, [db, projectId, token]);
 
   // ══════════════════════════════════════════════════════════════════════════
   // Operações CMS — Secções
@@ -268,10 +304,10 @@ export function useDocStore() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "devdocs-data.json";
+    a.download = `${projectId ?? "docs"}-export.json`;
     a.click();
     URL.revokeObjectURL(url);
-  }, [db]);
+  }, [db, projectId]);
 
   const importJSON = useCallback((file: File) => {
     const reader = new FileReader();

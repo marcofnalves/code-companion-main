@@ -16,6 +16,15 @@ interface DocContentProps {
 
 const generateId = () => `block-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
 
+// Interpreta <br/>, \n e &nbsp; — white-space:pre-wrap preserva espaços/indentação
+function renderText(content: string): string {
+  return content
+    .replace(/<br\s*\/?>/gi, "\n")  // <br/> / <br> → newline
+    .replace(/&nbsp;/g, "\u00A0");  // &nbsp; → espaço não-separável
+}
+
+const preWrap: React.CSSProperties = { whiteSpace: "pre-wrap" };
+
 const BlockRenderer = ({
   block,
   editMode,
@@ -74,7 +83,7 @@ const BlockRenderer = ({
             id={block.id}
           />
         ) : (
-          <Tag id={block.id}>{block.content}</Tag>
+          <Tag id={block.id} style={preWrap}>{renderText(block.content)}</Tag>
         )
       );
     }
@@ -88,7 +97,7 @@ const BlockRenderer = ({
             rows={Math.max(1, block.content.split("\n").length)}
           />
         ) : (
-          <p>{block.content}</p>
+          <p style={preWrap}>{renderText(block.content)}</p>
         )
       );
     case "code":
@@ -108,7 +117,7 @@ const BlockRenderer = ({
         ) : (
           <ul>
             {(block.items || []).map((item, i) => (
-              <li key={i}>{item}</li>
+              <li key={i} style={preWrap}>{renderText(item)}</li>
             ))}
           </ul>
         )
@@ -123,7 +132,7 @@ const BlockRenderer = ({
             rows={2}
           />
         ) : (
-          <blockquote>{block.content}</blockquote>
+          <blockquote style={preWrap}>{renderText(block.content)}</blockquote>
         )
       );
     case "divider":
